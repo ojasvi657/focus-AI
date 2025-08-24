@@ -1,0 +1,1943 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusAI - Your AI Study Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            color: #1a202c;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ffffff, transparent);
+            border-radius: 2px;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, #ffffff, #f0f8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            font-weight: 300;
+            margin-top: 10px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 
+                        0 1px 3px rgba(0, 0, 0, 0.05),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.6), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15),
+                        0 10px 20px rgba(102, 126, 234, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .card h3 {
+            margin-bottom: 25px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 8px;
+            padding: 6px;
+            font-size: 16px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1),
+                        0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .input-group input::placeholder, .input-group textarea::placeholder {
+            color: #a0aec0;
+            font-weight: 400;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            margin-top: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4),
+                        0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4),
+                        0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 8px 25px rgba(245, 101, 101, 0.4),
+                        0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-list {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding-right: 5px;
+        }
+
+        .task-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .task-list::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+
+        .task-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+
+        .task-item {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .task-item:hover {
+            background: linear-gradient(135deg, #edf2f7 0%, #f7fafc 100%);
+            transform: translateX(8px) scale(1.01);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-item h4 {
+            color: #2d3748;
+            margin-bottom: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .task-item p {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 400;
+        }
+
+        .task-priority {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .priority-high { background: #fed7d7; color: #c53030; }
+        .priority-medium { background: #feebc8; color: #dd6b20; }
+        .priority-low { background: #c6f6d5; color: #38a169; }
+
+        .chat-container {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 28px;
+            padding: 35px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-top: 20px;
+        }
+
+        .chat-messages {
+            height: 320px;
+            overflow-y: auto;
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            padding: 16px 20px;
+            border-radius: 20px;
+            max-width: 85%;
+            animation: messageSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            border-bottom-right-radius: 8px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .message.ai {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            color: #2d3748;
+            border-bottom-left-radius: 8px;
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        @keyframes messageSlide {
+            from { 
+                opacity: 0; 
+                transform: translateY(15px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .voice-btn {
+            padding: 10px 15px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .voice-btn.listening {
+            background: #e53e3e;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        .voice-btn:not(.listening) {
+            background: #48bb78;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .distraction-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 350px;
+        }
+
+        .distraction-popup.show {
+            transform: translateX(0);
+        }
+
+        .focus-timer {
+            text-align: center;
+            padding: 40px 30px;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px 40px;
+            border-radius: 24px;
+            display: inline-block;
+            min-width: 280px;
+            letter-spacing: 0.05em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .music-player {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #5a67d8, #667eea);
+            transition: width 0.3s ease;
+        }
+
+        @keyframes musicBar {
+            0%, 100% { height: 8px; }
+            50% { height: 20px; }
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 20px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        .week-progress {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .day-progress {
+            text-align: center;
+            flex: 1;
+        }
+
+        .day-progress span {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #5a67d8;
+        }
+
+        .progress-bar-mini {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill-mini {
+            height: 100%;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            transition: width 0.3s ease;
+        }
+
+        .day-progress small {
+            font-size: 0.75rem;
+            color: #718096;
+        }
+
+        .day-progress.today {
+            background: rgba(90, 103, 216, 0.1);
+            padding: 10px 5px;
+            border-radius: 10px;
+            border: 2px solid rgba(90, 103, 216, 0.3);
+        }
+
+        .session-history {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #48bb78;
+        }
+
+        .session-item span {
+            font-weight: 500;
+        }
+
+        .session-item small {
+            color: #718096;
+            font-size: 0.8rem;
+        }
+
+        .progress-section h4,
+        .session-log h4 {
+            margin-bottom: 15px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .goal-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .goal-item:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .goal-title {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .goal-deadline {
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .goal-deadline.urgent {
+            color: #e53e3e;
+            font-weight: bold;
+        }
+
+        .goal-progress {
+            margin-top: 10px;
+        }
+
+        .goal-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .goal-progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .goal-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #718096;
+        }
+
+        .milestone {
+            background: #e6fffa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 5px 0;
+            font-size: 0.9rem;
+            border-left: 3px solid #38b2ac;
+        }
+
+        .milestone.completed {
+            background: #f0fff4;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .task-checkbox {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .task-item-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .delete-task {
+            margin-left: auto;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .timer-display {
+                font-size: 2rem;
+                min-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 FocusAI</h1>
+            <p>Your AI-Powered Study & Focus Assistant</p>
+        </div>
+
+        <div class="focus-timer">
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;">
+                <select id="timerDuration" style="padding: 8px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                    <option value="15">15 minutes</option>
+                    <option value="25" selected>25 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="45">45 minutes</option>
+                    <option value="60">60 minutes</option>
+                    <option value="90">90 minutes</option>
+                </select>
+                <button class="btn" id="timerBtn" onclick="toggleTimer()" style="width: auto; padding: 8px 16px;">Start Focus Session</button>
+                <button class="btn btn-secondary" onclick="restartTimer()" style="width: auto; padding: 8px 16px;">🔄 Restart</button>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <h3>
+                    <span class="icon">🎯</span>
+                    Goal Tracker
+                </h3>
+                <div class="input-group">
+                    <label for="goalInput">Set a new goal:</label>
+                    <input type="text" id="goalInput" placeholder="e.g., Master React by December">
+                </div>
+                <div class="input-group">
+                    <label for="goalDeadline">Target date:</label>
+                    <input type="date" id="goalDeadline">
+                </div>
+                <button class="btn" onclick="addGoal()">🎯 Add Goal</button>
+                <div class="task-list" id="goalList"></div>
+            </div>
+
+            <div class="card">
+                <h3>
+                    <span class="icon">✅</span>
+                    My Tasks
+                </h3>
+                <div class="input-group">
+                    <input type="text" id="newTaskInput" placeholder="Add a new task...">
+                    <button class="btn" onclick="addManualTask()" style="margin-top: 10px;">Add Task</button>
+                </div>
+                <div class="task-list" id="manualTaskList">
+                    <div class="task-item">
+                        <h4>Welcome! Add your first task above ☝️</h4>
+                        <p>You can check off completed tasks</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>
+                    <span class="icon">🎯</span>
+                    Distraction Monitor
+                </h3>
+                <div class="input-group">
+                    <label for="distractingSites">Add distracting websites:</label>
+                    <input type="text" id="distractingSites" placeholder="youtube.com, twitter.com, instagram.com">
+                </div>
+                <button class="btn btn-secondary" onclick="startDistractionsMonitor()">Start Monitoring</button>
+                <button class="btn btn-danger" onclick="stopDistractionsMonitor()" style="margin-top: 10px;">Stop Monitoring</button>
+            </div>
+
+            <div class="card">
+                <h3>
+                    <span class="icon">🎵</span>
+                    Focus Music
+                </h3>
+                <div class="input-group">
+                    <select id="musicType">
+                        <option value="rain">🌧️ Rain Sounds</option>
+                        <option value="ocean">🌊 Ocean Waves</option>
+                        <option value="forest">🌲 Forest Ambient</option>
+                        <option value="cafe">☕ Coffee Shop</option>
+                        <option value="lofi">🎧 Lo-Fi Beats</option>
+                        <option value="classical">🎼 Classical Focus</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary" onclick="playFocusMusic()" id="musicBtn">🎵 Play Music</button>
+                <button class="btn btn-danger" onclick="stopFocusMusic()" style="margin-top: 10px;">⏹️ Stop Music</button>
+                <div id="musicStatus" style="margin-top: 10px; padding: 10px; background: #f0f8ff; border-radius: 8px; display: none;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="currentTrack">🎵 No music playing</span>
+                        <div id="musicAnimation" style="display: none;">
+                            <div style="display: flex; gap: 2px; align-items: end;">
+                                <div style="width: 3px; height: 10px; background: #5a67d8; animation: musicBar 0.8s ease-in-out infinite;"></div>
+                                <div style="width: 3px; height: 15px; background: #667eea; animation: musicBar 0.8s ease-in-out infinite 0.2s;"></div>
+                                <div style="width: 3px; height: 8px; background: #764ba2; animation: musicBar 0.8s ease-in-out infinite 0.4s;"></div>
+                                <div style="width: 3px; height: 12px; background: #5a67d8; animation: musicBar 0.8s ease-in-out infinite 0.6s;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <h3>
+                <span class="icon">📊</span>
+                Study Analytics Dashboard
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalFocusTime">0h 0m</div>
+                    <div class="stat-label">Total Focus Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="tasksCompleted">0</div>
+                    <div class="stat-label">Tasks Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="currentStreak">0</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgSessionLength">0m</div>
+                    <div class="stat-label">Avg Session</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                <div class="progress-section">
+                    <h4>📈 This Week's Progress</h4>
+                    <div class="week-progress">
+                        <div class="day-progress" data-day="Mon">
+                            <span>M</span>
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill-mini" style="width: 0%"></div>
+                            </div>
+                            <small>0min</small>
+                        </div>
+                        <div class="day-progress" data-day="Tue">
+                            <span>T</span>
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill-mini" style="width: 0%"></div>
+                            </div>
+                            <small>0min</small>
+                        </div>
+                        <div class="day-progress" data-day="Wed">
+                            <span>W</span>
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill-mini" style="width: 0%"></div>
+                            </div>
+                            <small>0min</small>
+                        </div>
+                        <div class="day-progress" data-day="Thu">
+                            <span>T</span>
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill-mini" style="width: 0%"></div>
+                            </div>
+                            <small>0min</small>
+                        </div>
+                        <div class="day-progress" data-day="Fri">
+                            <span>F</span>
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill-mini" style="width: 0%"></div>
+                            </div>
+                            <small>0min</small>
+                        </div>
+                        <div class="day-progress" data-day="Sat">
+                            <span>S</span>
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill-mini" style="width: 0%"></div>
+                            </div>
+                            <small>0min</small>
+                        </div>
+                        <div class="day-progress" data-day="Sun">
+                            <span>S</span>
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill-mini" style="width: 0%"></div>
+                            </div>
+                            <small>0min</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="session-log">
+                    <h4>📝 Recent Sessions</h4>
+                    <div id="recentSessions" class="session-history">
+                        <div class="session-item">
+                            <span>🕒 No sessions yet</span>
+                            <small>Start a focus session to see logs here!</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <h3>
+                <span class="icon">💬</span>
+                AI Study Companion
+            </h3>
+            
+            <div class="voice-controls">
+                <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceRecording()">🎤 Start Voice Command</button>
+                <button class="voice-btn" onclick="clearChat()">🗑️ Clear Chat</button>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai">
+                    Hi! I'm your AI study companion. I can help you stay motivated, explain concepts, break down tasks, and answer questions. Try saying "Add task: finish homework" or just type your question!
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="chatInput" placeholder="Ask me anything or give me a task..." style="flex: 1;">
+                <button class="btn" onclick="sendMessage()" style="width: auto; padding: 12px 20px;">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="distraction-popup" id="distractionPopup">
+        <h4>🚨 Distraction Detected!</h4>
+        <p>Looks like you're browsing <span id="distractingSite"></span>. Want to take a 5-minute break instead?</p>
+        <button class="btn" onclick="takeBreak()" style="margin-right: 10px;">Take Break</button>
+        <button class="btn btn-danger" onclick="dismissDistraction()">Stay Focused</button>
+    </div>
+
+    <script>
+        // Global state
+        let isTimerRunning = false;
+        let timerInterval;
+        let currentTime = 25 * 60; // 25 minutes in seconds
+        let totalTime = 25 * 60; // for progress calculation
+        let isListening = false;
+        let monitoringDistractions = false;
+        let currentAudio = null;
+        let manualTasks = [];
+        let goals = [];
+        let studyStats = {
+            totalFocusTime: 0, // in minutes
+            tasksCompleted: 0,
+            currentStreak: 0,
+            sessions: [],
+            weeklyProgress: {
+                'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0, 'Sat': 0, 'Sun': 0
+            }
+        };
+
+        // Task breakdown AI responses
+        const taskBreakdowns = {
+            'data structures exam': [
+                { task: 'Review Arrays and Linked Lists concepts', time: '2 hours', priority: 'high' },
+                { task: 'Practice Tree traversal problems', time: '1.5 hours', priority: 'high' },
+                { task: 'Study Graph algorithms (BFS, DFS)', time: '2 hours', priority: 'medium' },
+                { task: 'Complete Stack and Queue exercises', time: '1 hour', priority: 'medium' },
+                { task: 'Review Hash Tables and implementation', time: '1 hour', priority: 'low' },
+                { task: 'Take practice test', time: '2 hours', priority: 'high' }
+            ],
+            'react project': [
+                { task: 'Set up project structure and dependencies', time: '30 minutes', priority: 'high' },
+                { task: 'Create component hierarchy design', time: '45 minutes', priority: 'high' },
+                { task: 'Implement main UI components', time: '3 hours', priority: 'high' },
+                { task: 'Add state management', time: '2 hours', priority: 'medium' },
+                { task: 'Style components with CSS', time: '2 hours', priority: 'medium' },
+                { task: 'Test and debug functionality', time: '1 hour', priority: 'low' }
+            ],
+            'default': [
+                { task: 'Break down the goal into smaller steps', time: '30 minutes', priority: 'high' },
+                { task: 'Research and gather resources', time: '1 hour', priority: 'high' },
+                { task: 'Create a timeline and milestones', time: '20 minutes', priority: 'medium' },
+                { task: 'Start with the most important task', time: 'varies', priority: 'high' },
+                { task: 'Review and adjust your approach', time: '15 minutes', priority: 'low' }
+            ]
+        };
+
+        // AI responses for chat
+        const aiResponses = {
+            motivational: [
+                "You're doing great! Remember, every expert was once a beginner. Keep pushing forward! 💪",
+                "Progress, not perfection! Each small step gets you closer to your goal. 🌟",
+                "Believe in yourself! You have the power to achieve anything you set your mind to. 🚀",
+                "Taking breaks is important too. Your brain needs time to process and consolidate learning. 🧠"
+            ],
+            study_tips: [
+                "Try the Pomodoro technique: 25 minutes focused work, 5 minute break. It really works! 🍅",
+                "Active recall is more effective than just re-reading. Test yourself frequently! 📝",
+                "Teach someone else (even your pet!) to reinforce your understanding. 🐕",
+                "Create mind maps or visual diagrams to connect concepts together. 🗺️"
+            ],
+            explanations: {
+                'arrays': "Arrays are like a row of boxes, each with a number (index). You can quickly access any box if you know its position! Perfect for when you need fast access to elements.",
+                'linked lists': "Think of linked lists like a treasure hunt - each clue (node) points to the next location. Great when you need to frequently add/remove items!",
+                'trees': "Trees are like family trees! Each node has children, and we can traverse them in different ways (pre-order, in-order, post-order).",
+                'graphs': "Graphs are like social networks - nodes (people) connected by edges (relationships). We explore them using BFS (level by level) or DFS (go deep first)."
+            }
+        };
+
+        // Timer functions
+        function toggleTimer() {
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                document.getElementById('timerBtn').textContent = 'Resume Session';
+                isTimerRunning = false;
+            } else {
+                startTimer();
+                document.getElementById('timerBtn').textContent = 'Pause Session';
+                isTimerRunning = true;
+            }
+        }
+
+        function startTimer() {
+            // Get selected duration if timer is at default position
+            const duration = parseInt(document.getElementById('timerDuration').value);
+            if (currentTime === totalTime) {
+                currentTime = duration * 60;
+                totalTime = duration * 60;
+            }
+            
+            timerInterval = setInterval(() => {
+                currentTime--;
+                updateTimerDisplay();
+                updateProgress();
+                
+                if (currentTime <= 0) {
+                    clearInterval(timerInterval);
+                    isTimerRunning = false;
+                    document.getElementById('timerBtn').textContent = 'Start Focus Session';
+                    
+                    // Log completed session
+                    const sessionLength = Math.floor(totalTime / 60);
+                    logStudySession(sessionLength);
+                    
+                    currentTime = totalTime;
+                    alert('🎉 Great job! You completed your focus session!');
+                    addAIMessage("Awesome work! You just completed a full focus session. How do you feel? Ready for a short break? 😊");
+                }
+            }, 1000);
+        }
+
+        function restartTimer() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            const duration = parseInt(document.getElementById('timerDuration').value);
+            currentTime = duration * 60;
+            totalTime = duration * 60;
+            updateTimerDisplay();
+            updateProgress();
+            document.getElementById('timerBtn').textContent = 'Start Focus Session';
+            addAIMessage(`Timer reset to ${duration} minutes! Ready for a fresh focus session? 🔄`);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = currentTime % 60;
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress() {
+            const progress = ((totalTime - currentTime) / totalTime) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        // Manual task management
+        function addManualTask() {
+            const taskInput = document.getElementById('newTaskInput');
+            const taskText = taskInput.value.trim();
+            
+            if (taskText) {
+                const task = {
+                    id: Date.now(),
+                    text: taskText,
+                    completed: false,
+                    createdAt: new Date()
+                };
+                
+                manualTasks.push(task);
+                taskInput.value = '';
+                displayManualTasks();
+                addAIMessage(`Task added: "${taskText}" ✅ You're building great momentum!`);
+            }
+        }
+
+        function displayManualTasks() {
+            const taskList = document.getElementById('manualTaskList');
+            
+            if (manualTasks.length === 0) {
+                taskList.innerHTML = `
+                    <div class="task-item">
+                        <h4>Welcome! Add your first task above ☝️</h4>
+                        <p>You can check off completed tasks</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            taskList.innerHTML = '';
+            
+            manualTasks.forEach((task, index) => {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
+                taskElement.innerHTML = `
+                    <div class="task-item-content">
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
+                               onchange="toggleTaskCompletion(${task.id})">
+                        <div>
+                            <h4>${task.text}</h4>
+                            <p>Added: ${task.createdAt.toLocaleDateString()}</p>
+                        </div>
+                        <button class="delete-task" onclick="deleteTask(${task.id})">🗑️</button>
+                    </div>
+                `;
+                taskList.appendChild(taskElement);
+            });
+        }
+
+        function toggleTaskCompletion(taskId) {
+            const task = manualTasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                displayManualTasks();
+                
+                if (task.completed) {
+                    studyStats.tasksCompleted++;
+                    updateStudyStats();
+                    addAIMessage(`Great job completing "${task.text}"! 🎉 What's next on your list?`);
+                } else {
+                    studyStats.tasksCompleted = Math.max(0, studyStats.tasksCompleted - 1);
+                    updateStudyStats();
+                    addAIMessage(`"${task.text}" marked as incomplete. No worries, you've got this! 💪`);
+                }
+            }
+        }
+
+        function deleteTask(taskId) {
+            manualTasks = manualTasks.filter(t => t.id !== taskId);
+            displayManualTasks();
+            addAIMessage("Task deleted! Keeping your list clean and focused. 🧹");
+        }
+
+        // Goal Management System
+        function addGoal() {
+            const goalInput = document.getElementById('goalInput');
+            const deadlineInput = document.getElementById('goalDeadline');
+            const goalText = goalInput.value.trim();
+            const deadline = deadlineInput.value;
+            
+            if (goalText && deadline) {
+                const goal = {
+                    id: Date.now(),
+                    text: goalText,
+                    deadline: new Date(deadline),
+                    createdAt: new Date(),
+                    progress: 0,
+                    milestones: generateMilestones(goalText, new Date(deadline))
+                };
+                
+                goals.push(goal);
+                goalInput.value = '';
+                deadlineInput.value = '';
+                displayGoals();
+                addAIMessage(`🎯 Goal added: "${goalText}"! I've created some milestones to help you achieve it. Stay focused! 💪`);
+            } else {
+                addAIMessage("Please enter both a goal and target date to create a trackable goal! 📅");
+            }
+        }
+
+        function generateMilestones(goalText, deadline) {
+            const now = new Date();
+            const timeLeft = deadline - now;
+            const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24));
+            
+            if (daysLeft <= 0) return ["Goal deadline has passed"];
+            
+            const milestones = [];
+            const goalLower = goalText.toLowerCase();
+            
+            if (goalLower.includes('exam') || goalLower.includes('test')) {
+                milestones.push("📚 Gather all study materials");
+                milestones.push("📝 Create study schedule");
+                milestones.push("🧠 Complete first review cycle");
+                milestones.push("✍️ Take practice tests");
+                milestones.push("🔄 Final review and memorization");
+            } else if (goalLower.includes('project') || goalLower.includes('code')) {
+                milestones.push("📋 Plan project structure");
+                milestones.push("⚡ Set up development environment");
+                milestones.push("🏗️ Build core functionality");
+                milestones.push("🎨 Add styling and polish");
+                milestones.push("🧪 Test and debug");
+            } else if (goalLower.includes('learn') || goalLower.includes('master')) {
+                milestones.push("📖 Find learning resources");
+                milestones.push("🎯 Complete beginner tutorials");
+                milestones.push("💡 Work on practice problems");
+                milestones.push("🏗️ Build a small project");
+                milestones.push("📚 Review and consolidate knowledge");
+            } else {
+                milestones.push("🎯 Break down into smaller tasks");
+                milestones.push("📅 Create timeline");
+                milestones.push("🚀 Start execution phase");
+                milestones.push("🔄 Review and adjust approach");
+                milestones.push("🎉 Final push to completion");
+            }
+            
+            return milestones;
+        }
+
+        function displayGoals() {
+            const goalList = document.getElementById('goalList');
+            
+            if (goals.length === 0) {
+                goalList.innerHTML = `
+                    <div class="goal-item">
+                        <div class="goal-title">Set your first goal! 🎯</div>
+                        <p>Goals help you stay focused and track progress over time.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            goalList.innerHTML = '';
+            
+            goals.forEach(goal => {
+                const now = new Date();
+                const timeLeft = goal.deadline - now;
+                const daysLeft = Math.ceil(timeLeft / (1000 * 60 * 60 * 24));
+                
+                let deadlineClass = '';
+                let deadlineText = '';
+                
+                if (daysLeft < 0) {
+                    deadlineClass = 'urgent';
+                    deadlineText = `Overdue by ${Math.abs(daysLeft)} days`;
+                } else if (daysLeft <= 7) {
+                    deadlineClass = 'urgent';
+                    deadlineText = `${daysLeft} days left!`;
+                } else {
+                    deadlineText = `${daysLeft} days left`;
+                }
+                
+                const goalElement = document.createElement('div');
+                goalElement.className = 'goal-item';
+                goalElement.innerHTML = `
+                    <div class="goal-header">
+                        <div class="goal-title">${goal.text}</div>
+                        <button class="delete-task" onclick="deleteGoal(${goal.id})">🗑️</button>
+                    </div>
+                    <div class="goal-deadline ${deadlineClass}">${deadlineText}</div>
+                    <div class="goal-progress">
+                        <div class="goal-progress-bar">
+                            <div class="goal-progress-fill" style="width: ${goal.progress}%;"></div>
+                        </div>
+                        <div class="goal-stats">
+                            <span>${goal.progress}% Complete</span>
+                            <span>${goal.milestones.filter((m, i) => i < Math.floor(goal.progress / 20)).length}/${goal.milestones.length} milestones</span>
+                        </div>
+                    </div>
+                    <div class="milestones">
+                        ${goal.milestones.map((milestone, index) => `
+                            <div class="milestone ${index < Math.floor(goal.progress / 20) ? 'completed' : ''}" 
+                                 onclick="toggleMilestone(${goal.id}, ${index})">
+                                ${milestone}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                goalList.appendChild(goalElement);
+            });
+        }
+
+        function toggleMilestone(goalId, milestoneIndex) {
+            const goal = goals.find(g => g.id === goalId);
+            if (goal) {
+                const completedMilestones = Math.floor(goal.progress / 20);
+                
+                if (milestoneIndex === completedMilestones) {
+                    // Complete next milestone
+                    goal.progress = Math.min(100, (completedMilestones + 1) * 20);
+                    addAIMessage(`🎉 Milestone completed! You're making great progress on "${goal.text}"!`);
+                } else if (milestoneIndex === completedMilestones - 1 && completedMilestones > 0) {
+                    // Uncomplete last milestone
+                    goal.progress = Math.max(0, (completedMilestones - 1) * 20);
+                    addAIMessage(`Milestone unmarked. No worries, you can always adjust your progress! 🔄`);
+                }
+                
+                displayGoals();
+            }
+        }
+
+        function deleteGoal(goalId) {
+            goals = goals.filter(g => g.id !== goalId);
+            displayGoals();
+            addAIMessage("Goal deleted! Stay focused on your remaining objectives. 🎯");
+        }
+
+        // Study Analytics System
+        function logStudySession(minutes) {
+            const now = new Date();
+            const session = {
+                date: now,
+                duration: minutes,
+                day: now.toLocaleDateString('en-US', { weekday: 'short' })
+            };
+            
+            studyStats.sessions.push(session);
+            studyStats.totalFocusTime += minutes;
+            
+            // Update weekly progress
+            const dayAbbr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
+            const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][now.getDay()];
+            studyStats.weeklyProgress[dayName.substring(0, 3)] += minutes;
+            
+            updateStudyStats();
+            updateWeeklyProgress();
+            updateRecentSessions();
+        }
+
+        function updateStudyStats() {
+            const hours = Math.floor(studyStats.totalFocusTime / 60);
+            const minutes = studyStats.totalFocusTime % 60;
+            document.getElementById('totalFocusTime').textContent = `${hours}h ${minutes}m`;
+            
+            document.getElementById('tasksCompleted').textContent = studyStats.tasksCompleted;
+            
+            // Calculate streak (simplified - just days with sessions)
+            const uniqueDays = new Set(studyStats.sessions.map(s => s.date.toDateString()));
+            document.getElementById('currentStreak').textContent = uniqueDays.size;
+            
+            // Calculate average session length
+            const avgLength = studyStats.sessions.length > 0 ? 
+                Math.round(studyStats.totalFocusTime / studyStats.sessions.length) : 0;
+            document.getElementById('avgSessionLength').textContent = `${avgLength}m`;
+        }
+
+        function updateWeeklyProgress() {
+            const maxDaily = Math.max(...Object.values(studyStats.weeklyProgress));
+            const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+            
+            Object.keys(studyStats.weeklyProgress).forEach(day => {
+                const dayElement = document.querySelector(`[data-day="${day}"]`);
+                if (dayElement) {
+                    const progress = maxDaily > 0 ? (studyStats.weeklyProgress[day] / maxDaily) * 100 : 0;
+                    const fillElement = dayElement.querySelector('.progress-fill-mini');
+                    const timeElement = dayElement.querySelector('small');
+                    
+                    fillElement.style.width = `${progress}%`;
+                    timeElement.textContent = `${studyStats.weeklyProgress[day]}min`;
+                    
+                    // Highlight today
+                    if (day === today) {
+                        dayElement.classList.add('today');
+                    }
+                }
+            });
+        }
+
+        function updateRecentSessions() {
+            const recentSessionsContainer = document.getElementById('recentSessions');
+            const recentSessions = studyStats.sessions.slice(-5).reverse();
+            
+            if (recentSessions.length === 0) {
+                recentSessionsContainer.innerHTML = `
+                    <div class="session-item">
+                        <span>🕒 No sessions yet</span>
+                        <small>Start a focus session to see logs here!</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            recentSessionsContainer.innerHTML = recentSessions.map(session => `
+                <div class="session-item">
+                    <span>🕒 ${session.duration} min session</span>
+                    <small>${session.date.toLocaleDateString()} at ${session.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                </div>
+            `).join('');
+        }
+
+        // Task breakdown function
+        function breakdownTask() {
+            const taskInput = document.getElementById('taskInput').value.toLowerCase();
+            let breakdown = taskBreakdowns.default;
+
+            // Simple keyword matching for demo
+            for (let key in taskBreakdowns) {
+                if (taskInput.includes(key)) {
+                    breakdown = taskBreakdowns[key];
+                    break;
+                }
+            }
+
+            displayTasks(breakdown);
+            addAIMessage(`I've broken down your goal into manageable tasks! Each task has an estimated time and priority level. Start with the high-priority items first! 📚`);
+        }
+
+        function displayTasks(tasks) {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+
+            tasks.forEach((task, index) => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-item';
+                taskElement.innerHTML = `
+                    <h4>${task.task}</h4>
+                    <p>Estimated time: ${task.time}</p>
+                    <span class="task-priority priority-${task.priority}">${task.priority} priority</span>
+                `;
+                taskList.appendChild(taskElement);
+            });
+        }
+
+        // Chat functions
+        function sendMessage() {
+            const chatInput = document.getElementById('chatInput');
+            const message = chatInput.value.trim();
+            
+            if (message) {
+                addUserMessage(message);
+                processUserMessage(message);
+                chatInput.value = '';
+            }
+        }
+
+        function addUserMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.textContent = message;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addAIMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.textContent = message;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function processUserMessage(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Task addition
+            if (lowerMessage.includes('add task') || lowerMessage.includes('add a task')) {
+                const taskText = message.replace(/add (a )?task:?\s*/i, '');
+                addAIMessage(`Great! I've noted your task: "${taskText}". Would you like me to break it down further or set a time estimate? ✅`);
+                return;
+            }
+            
+            // Motivational requests
+            if (lowerMessage.includes('motivat') || lowerMessage.includes('encourage') || lowerMessage.includes('help') && lowerMessage.includes('focus')) {
+                const response = aiResponses.motivational[Math.floor(Math.random() * aiResponses.motivational.length)];
+                addAIMessage(response);
+                return;
+            }
+            
+            // Study tips
+            if (lowerMessage.includes('study tip') || lowerMessage.includes('how to study') || lowerMessage.includes('learning')) {
+                const response = aiResponses.study_tips[Math.floor(Math.random() * aiResponses.study_tips.length)];
+                addAIMessage(response);
+                return;
+            }
+            
+            // Concept explanations
+            for (let concept in aiResponses.explanations) {
+                if (lowerMessage.includes(concept)) {
+                    addAIMessage(aiResponses.explanations[concept]);
+                    return;
+                }
+            }
+            
+            // Default response
+            const defaultResponses = [
+                "I'm here to help! You can ask me to break down tasks, give study tips, explain concepts, or just chat for motivation. What would you like to work on? 🤔",
+                "That's an interesting question! While I can't answer everything perfectly, I can help you stay focused and motivated. Try asking about study techniques or let me break down a big task for you! 💡",
+                "I'm still learning! But I'm great at helping you stay organized and motivated. Want to start a focus timer or break down a big project? 🎯"
+            ];
+            const response = defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+            addAIMessage(response);
+        }
+
+        // Voice recognition (simulated)
+        function toggleVoiceRecording() {
+            const voiceBtn = document.getElementById('voiceBtn');
+            
+            if (!isListening) {
+                isListening = true;
+                voiceBtn.textContent = '🛑 Stop Recording';
+                voiceBtn.classList.add('listening');
+                
+                // Simulate voice recognition
+                setTimeout(() => {
+                    const simulatedCommand = "Add task: Review machine learning concepts";
+                    addUserMessage(`🎤 Voice: ${simulatedCommand}`);
+                    processUserMessage(simulatedCommand);
+                    stopVoiceRecording();
+                }, 3000);
+                
+            } else {
+                stopVoiceRecording();
+            }
+        }
+
+        function stopVoiceRecording() {
+            isListening = false;
+            const voiceBtn = document.getElementById('voiceBtn');
+            voiceBtn.textContent = '🎤 Start Voice Command';
+            voiceBtn.classList.remove('listening');
+        }
+
+        // Distraction monitoring (simulated)
+        function startDistractionsMonitor() {
+            monitoringDistractions = true;
+            addAIMessage("Distraction monitoring started! I'll alert you if you visit distracting sites. Stay focused! 👁️");
+            
+            // Simulate distraction detection
+            setTimeout(() => {
+                if (monitoringDistractions) {
+                    showDistractionPopup('youtube.com');
+                }
+            }, 15000); // Show after 15 seconds for demo
+        }
+
+        function stopDistractionsMonitor() {
+            monitoringDistractions = false;
+            addAIMessage("Distraction monitoring stopped. Great self-control! 🎯");
+        }
+
+        function showDistractionPopup(site) {
+            document.getElementById('distractingSite').textContent = site;
+            document.getElementById('distractionPopup').classList.add('show');
+        }
+
+        function takeBreak() {
+            document.getElementById('distractionPopup').classList.remove('show');
+            addAIMessage("Good choice! Taking a 5-minute break. I'll remind you to get back to work! ⏰");
+            
+            setTimeout(() => {
+                addAIMessage("Break time's over! Ready to get back to focused work? You've got this! 💪");
+            }, 5000); // 5 seconds for demo (would be 5 minutes in real app)
+        }
+
+        function dismissDistraction() {
+            document.getElementById('distractionPopup').classList.remove('show');
+            addAIMessage("Excellent self-discipline! Staying focused is key to achieving your goals. Keep it up! 🌟");
+        }
+
+        // Focus music with REAL audio playback
+        function playFocusMusic() {
+            const musicType = document.getElementById('musicType').value;
+            const musicStatus = document.getElementById('musicStatus');
+            const currentTrack = document.getElementById('currentTrack');
+            const musicAnimation = document.getElementById('musicAnimation');
+            const musicBtn = document.getElementById('musicBtn');
+            
+            // Stop current music if playing
+            stopFocusMusic();
+            
+            // Real audio URLs for ambient sounds
+            const musicTracks = {
+                'rain': {
+                    name: '🌧️ Gentle Rain Sounds',
+                    url: 'https://www.soundjay.com/misc/sounds-765.mp3'
+                },
+                'ocean': {
+                    name: '🌊 Calming Ocean Waves',
+                    url: 'https://www.soundjay.com/misc/sounds-767.mp3'
+                },
+                'forest': {
+                    name: '🌲 Peaceful Forest Sounds', 
+                    url: 'https://www.soundjay.com/misc/sounds-766.mp3'
+                },
+                'cafe': {
+                    name: '☕ Cozy Coffee Shop Ambience',
+                    url: 'https://www.soundjay.com/misc/sounds-768.mp3'
+                },
+                'lofi': {
+                    name: '🎧 Chill Lo-Fi Hip Hop Beats',
+                    // Using a different approach for Lo-Fi - YouTube audio (won't work in iframe but shows concept)
+                    url: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMcBjiR1/LNeSsFJHfH8N2QQAoUXrTp66hVFApc4TxTACAQAAAABAGBAEAfAABAAAAFKgAACBgBCEBZGF0YQAJoK==',
+                },
+                'classical': {
+                    name: '🎼 Classical Piano & Strings',
+                    url: 'https://www.soundjay.com/misc/sounds-769.mp3'
+                }
+            };
+            
+            const selectedTrack = musicTracks[musicType];
+            
+            try {
+                // Create and configure audio element
+                currentAudio = new Audio();
+                currentAudio.crossOrigin = "anonymous";
+                currentAudio.loop = true;
+                currentAudio.volume = 0.6;
+                
+                // Set up event listeners
+                currentAudio.addEventListener('loadstart', function() {
+                    currentTrack.textContent = `⏳ Loading ${selectedTrack.name}...`;
+                    musicBtn.textContent = '⏳ Loading...';
+                });
+                
+                currentAudio.addEventListener('canplay', function() {
+                    currentTrack.textContent = `♪ ${selectedTrack.name}`;
+                    musicStatus.style.display = 'block';
+                    musicAnimation.style.display = 'block';
+                    musicBtn.textContent = '🎵 Playing...';
+                    musicBtn.disabled = true;
+                });
+                
+                currentAudio.addEventListener('error', function(e) {
+                    console.log('Audio error:', e);
+                    // Fallback to Web Audio API generated sounds
+                    playGeneratedSound(musicType);
+                });
+                
+                // Try to load and play the audio
+                currentAudio.src = selectedTrack.url;
+                currentAudio.play().catch(function(error) {
+                    console.log('Playback failed:', error);
+                    // Fallback to generated sound
+                    playGeneratedSound(musicType);
+                });
+                
+                addAIMessage(`🎵 Loading ${selectedTrack.name}! If you don't hear audio, your browser might be blocking it. Try clicking play after interacting with the page first.`);
+                
+            } catch (error) {
+                console.log('Audio creation failed:', error);
+                playGeneratedSound(musicType);
+            }
+        }
+
+        // Fallback: Generate sounds using Web Audio API
+        function playGeneratedSound(type) {
+            const musicStatus = document.getElementById('musicStatus');
+            const currentTrack = document.getElementById('currentTrack');
+            const musicAnimation = document.getElementById('musicAnimation');
+            const musicBtn = document.getElementById('musicBtn');
+            
+            try {
+                // Create AudioContext
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const sounds = {
+                    'rain': () => generateWhiteNoise(audioContext, 0.3, 2000),
+                    'ocean': () => generateOceanWave(audioContext),
+                    'forest': () => generateBrownNoise(audioContext, 0.2, 800),
+                    'cafe': () => generatePinkNoise(audioContext, 0.25, 1500),
+                    'lofi': () => generateLoFiBeats(audioContext),
+                    'classical': () => generateTones(audioContext, [261.63, 329.63, 392.00], 0.1)
+                };
+                
+                const soundNames = {
+                    'rain': '🌧️ Generated Rain (White Noise)',
+                    'ocean': '🌊 Generated Ocean Waves',
+                    'forest': '🌲 Generated Forest (Brown Noise)',
+                    'cafe': '☕ Generated Café Ambience (Pink Noise)',
+                    'lofi': '🎧 Generated Lo-Fi Tones',
+                    'classical': '🎼 Generated Classical Tones'
+                };
+                
+                if (sounds[type]) {
+                    currentAudio = sounds[type]();
+                    currentTrack.textContent = `♪ ${soundNames[type]}`;
+                    musicStatus.style.display = 'block';
+                    musicAnimation.style.display = 'block';
+                    musicBtn.textContent = '🎵 Playing...';
+                    musicBtn.disabled = true;
+                    
+                    addAIMessage(`🎵 Playing generated ${soundNames[type]}! This uses Web Audio API to create ambient sounds.`);
+                }
+            } catch (error) {
+                addAIMessage(`🎵 Audio playback not supported in your browser. Try using Chrome or Firefox for the best experience.`);
+                console.log('Web Audio API failed:', error);
+            }
+        }
+
+        // Generate different types of noise
+        function generateWhiteNoise(audioContext, volume = 0.3, filterFreq = null) {
+            const bufferSize = audioContext.sampleRate * 2;
+            const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+            
+            const whiteNoise = audioContext.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+            
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = volume;
+            
+            if (filterFreq) {
+                const filter = audioContext.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = filterFreq;
+                whiteNoise.connect(filter);
+                filter.connect(gainNode);
+            } else {
+                whiteNoise.connect(gainNode);
+            }
+            
+            gainNode.connect(audioContext.destination);
+            whiteNoise.start();
+            
+            return { stop: () => whiteNoise.stop(), audioContext };
+        }
+
+        function generateBrownNoise(audioContext, volume = 0.2, filterFreq = 800) {
+            return generateWhiteNoise(audioContext, volume, filterFreq);
+        }
+
+        function generatePinkNoise(audioContext, volume = 0.25, filterFreq = 1500) {
+            return generateWhiteNoise(audioContext, volume, filterFreq);
+        }
+
+        function generateOceanWave(audioContext) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(0.5, audioContext.currentTime);
+            
+            filter.type = 'lowpass';
+            filter.frequency.value = 1000;
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 1);
+            
+            // Add some randomness
+            setInterval(() => {
+                if (oscillator.frequency) {
+                    oscillator.frequency.setValueAtTime(
+                        0.3 + Math.random() * 0.4, 
+                        audioContext.currentTime
+                    );
+                }
+            }, 2000);
+            
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            
+            return { stop: () => oscillator.stop(), audioContext };
+        }
+
+        function generateTones(audioContext, frequencies, volume = 0.1) {
+            const oscillators = frequencies.map(freq => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.frequency.value = freq;
+                osc.type = 'sine';
+                gain.gain.value = volume / frequencies.length;
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start();
+                
+                return osc;
+            });
+            
+            return { 
+                stop: () => oscillators.forEach(osc => osc.stop()), 
+                audioContext 
+            };
+        }
+
+        function generateLoFiBeats(audioContext) {
+            // Create a simple beat pattern
+            const bpm = 70;
+            const beatInterval = 60 / bpm;
+            let beatCount = 0;
+            
+            const playBeat = () => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                // Kick drum simulation
+                osc.frequency.value = beatCount % 4 === 0 ? 60 : 80;
+                osc.type = 'sine';
+                
+                gain.gain.setValueAtTime(0.4, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.3);
+                
+                beatCount++;
+            };
+            
+            playBeat(); // Play first beat
+            const beatTimer = setInterval(playBeat, beatInterval * 1000);
+            
+            return { 
+                stop: () => clearInterval(beatTimer), 
+                audioContext 
+            };
+        }
+
+        function stopFocusMusic() {
+            const musicStatus = document.getElementById('musicStatus');
+            const currentTrack = document.getElementById('currentTrack');
+            const musicAnimation = document.getElementById('musicAnimation');
+            const musicBtn = document.getElementById('musicBtn');
+            
+            if (currentAudio) {
+                try {
+                    if (currentAudio.pause) {
+                        // HTML5 Audio
+                        currentAudio.pause();
+                        currentAudio.currentTime = 0;
+                    } else if (currentAudio.stop) {
+                        // Web Audio API
+                        currentAudio.stop();
+                    }
+                    
+                    if (currentAudio.audioContext && currentAudio.audioContext.close) {
+                        currentAudio.audioContext.close();
+                    }
+                } catch (error) {
+                    console.log('Error stopping audio:', error);
+                }
+                
+                addAIMessage(`🎵 Music stopped. Great focus session!`);
+                currentAudio = null;
+            }
+            
+            currentTrack.textContent = '🎵 No music playing';
+            musicStatus.style.display = 'none';
+            musicAnimation.style.display = 'none';
+            musicBtn.textContent = '🎵 Play Music';
+            musicBtn.disabled = false;
+        }
+
+        // Utility functions
+        function clearChat() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="message ai">
+                    Hi! I'm your AI study companion. I can help you stay motivated, explain concepts, break down tasks, and answer questions. Try saying "Add task: finish homework" or just type your question!
+                </div>
+            `;
+        }
+
+        // Event listeners
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        document.getElementById('newTaskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addManualTask();
+            }
+        });
+
+        // Timer duration change handler
+        document.getElementById('timerDuration').addEventListener('change', function() {
+            if (!isTimerRunning) {
+                const duration = parseInt(this.value);
+                currentTime = duration * 60;
+                totalTime = duration * 60;
+                updateTimerDisplay();
+                updateProgress();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            addAIMessage("Welcome to FocusAI! I'm here to help you stay focused and productive. Start by setting a goal, adding tasks, or asking me anything! 🚀");
+            displayManualTasks();
+            displayGoals();
+            updateStudyStats();
+            updateWeeklyProgress();
+            updateRecentSessions();
+            
+            // Set default deadline to next week
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            document.getElementById('goalDeadline').value = nextWeek.toISOString().split('T')[0];
+        });
+    </script>
+</body>
+</html>
